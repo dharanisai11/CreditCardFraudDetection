@@ -1,0 +1,131 @@
+#importing Dependencies
+import numpy as np
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score
+
+#Loading Datasets to pandas data frame
+credit_card_data = pd.read_csv("DATASETS/creditcard.csv")
+
+#First five rows of dataset
+credit_card_data.head()
+#by using PCA all features into numerical values
+# The class atribute tells the transaction is legit or fraudalant
+# 0-->legit
+# 1-->farudalant
+
+
+#last five rows
+credit_card_data.tail()
+
+# Inforamtion of dataset
+credit_card_data.info()
+
+#checking null values
+credit_card_data.isnull().sum()
+
+
+#DIstribution of legit and fraudalant transactions
+credit_card_data["Class"].value_counts()
+# The below data is unbalanced because more than 90% of data is in one particular calss or target varble
+# ie 0 -->284315
+# ie 1-->492
+# So the dataset is highly unbalanced
+# 0--->Normal Transaction
+# 1--->Fraudalant Transaction
+
+
+ #Seperating the data for analysis
+legit = credit_card_data[credit_card_data.Class == 0]
+fraud = credit_card_data[credit_card_data.Class == 1]
+
+print(legit.shape)
+print(fraud.shape)
+
+# Statical measure of the data
+legit.Amount.describe()
+
+fraud.Amount.describe()
+
+# Compare the values for both transaction.
+credit_card_data.groupby('Class').mean()
+
+# The below output describes the mean of each column of two calsses ie (legit and fraud).
+# The mean difference is not that so close
+# SO it is unbalanced data
+
+# Under_Sampling 
+# Building a Sample dataset from original dataset  that cointains similar distribution of legit and fraud transaction which similar to Original dataset.
+# Nuber of fraudalant Transaction --->492.
+# Process of generating the sample dataset which is even no. of fraud and legit transactions.
+# From the legit transactions take 492 randam saple data by using legit.sample(n = 492).
+        # (Randam sampling is one of good method to get sample data from original datasets.)
+
+legit_sample = legit.sample(n = 492)
+
+#After getting the sample data concat the both fraud and legit sample data.
+# CONCATING TWO DATAFRAMES
+new_dataset = pd.concat([legit_sample,fraud],axis = 0)
+# axis = 0 because we need to add the values by Row. 
+# axis = 1 indicates colunm.
+
+new_dataset.head()
+
+new_dataset["Class"].value_counts()
+
+new_dataset.groupby("Class").mean()
+
+# SPlitting the data into Features and Targets
+X = new_dataset.drop(columns = "Class",axis = 1) # Droping the class column
+Y = new_dataset["Class"] # Y contains  the Class column
+
+print(X) 
+# Below output show the dataset without Class column
+
+print(Y)
+
+X_train,X_test,Y_train,Y_test = train_test_split(X,Y,test_size = .2,stratify = Y,random_state = 2) 
+# 80% of data is used to train the model
+# 20% of data is used to test the model
+# X_train stores the 80% of data from X (ie from the Features ie 30 columns) for training.
+# And the Y_train stores the 80% of corresponding data to the features from Y varaible ie from class column.
+# X_test stores the 20% of data from X (ie from the Features ie 30 columns) for testing.
+#And the Y_test stores the 20% of corresponding data to the features from Y varaible ie from class column.
+# stratify = y is to dristribute the two  classes in both X_train and X_test
+
+print(X.shape,X_train.shape,X_test.shape)
+
+# Model Training 
+# Logistic Regression
+model =LogisticRegression()
+
+# Training the Logistic Regression model with trianing data.
+model.fit(X_train,Y_train)
+
+# Model Evaluation by using Accuracy Score
+# accuracy on training data(seen_data)
+X_train_prediction = model.predict(X_train)
+training_data_accuracy = accuracy_score(X_train_prediction,Y_train)
+# The just above line compares between the predicted values from X_train_prediction and actual values from Y_train.
+
+print("Accuracy on Training data:",training_data_accuracy)
+# The output shows 0.928843710292249 which is very good accuracy score,generally the accuracy score is more than 80% then the predictions are good.
+# 92% Means out of 100 predictions the model can predict correctly for 92 predictions so that is meant by accuracy score.
+
+# Evaluating the model by using unseen data ie test data.
+# # accuracy on test data(unseen_data)
+X_test_prediction = model.predict(X_test)
+testing_data_accuracy = accuracy_score(X_test_prediction,Y_test)
+# The just above line compares between the predicted values from X_test_prediction and actual values from Y_test which is real labels.
+
+print("Accuracy on Testing data:",testing_data_accuracy)
+# output is similar to the training dataset
+# if the Accuracy on Trainng data is very different from Accuracy on Testing data then it means model has overfitted or underfitted.
+# Example:
+    # Accuracy on Training data: 90%
+    # Accuracy on Testing data-->50%
+# Then the model is said to be overfitted by training data.
+    # Accuracy on Training data: 50%
+    # Accuracy on Testing data-->90%
+# Then the model is said to be underfitted.
